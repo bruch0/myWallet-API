@@ -44,7 +44,7 @@ const signUp = async (req, res) => {
 		if (!objectFailedMarketRules) {
 			try {
 				const result = await connection.query('SELECT * FROM users WHERE email = $1', [email]);
-				const emailAlreadyRegistered = result.rows !== [];
+				const emailAlreadyRegistered = result.rows[0] !== undefined;
 				if (!emailAlreadyRegistered) {
 					const hash = bcrypt.hashSync(password, 10);
 					await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3)', [name, email, hash]);
