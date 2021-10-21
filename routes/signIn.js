@@ -21,8 +21,8 @@ const signIn = async (req, res) => {
 	if (!objectFailedMarketRules) {
 		try {
 			const emailRegistered = await connection.query('SELECT * FROM users WHERE email = $1', [email]);
-
 			if (emailRegistered.rowCount !== 0) {
+				const user = emailRegistered.rows[0].name;
 				const hash = emailRegistered.rows[0].password;
 				const isValidPassword = bcrypt.compareSync(password, hash);
 
@@ -35,7 +35,7 @@ const signIn = async (req, res) => {
 						res.status(200).send({ token })
 					}
 					else {
-						res.status(200).send({token: result.rows[0].token})
+						res.status(200).send({token: result.rows[0].token, user})
 					}
 				}
 				else {
