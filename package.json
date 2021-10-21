@@ -8,7 +8,8 @@
     "joi": "^17.4.2",
     "nodemon": "^2.0.13",
     "pg": "^8.7.1",
-    "string-strip-html": "^9.0.2"
+    "string-strip-html": "^9.0.2",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
