@@ -98,6 +98,19 @@ describe('POST sign-in', () => {
     expect(status).toEqual(401);
   });
 
+  // eslint-disable-next-line max-len
+  it('should return a unique token on first login and return the same token on second login', async () => {
+    const body = {
+      email: 'user@test.com',
+      password: 'usertest',
+    };
+    const result = await supertest(app).post('/sign-in').send(body);
+    const token = result.body.token;
+    const newResult = await supertest(app).post('/sign-in').send(body);
+    const newToken = newResult.body.token;
+    expect(newToken).toEqual(token);
+  });
+
   it('should return code 200 when the user is able to login', async () => {
     const body = {
       email: 'user@test.com',
@@ -108,3 +121,104 @@ describe('POST sign-in', () => {
     expect(status).toEqual(200);
   });
 });
+
+describe('GET transactions', () => {
+  beforeAll(async () => {
+    await connection.query(`
+    INSERT INTO
+        sessions (token, userid)
+        VALUES ('token', 0)`);
+  });
+
+  it('should return code 401 when token is not given in headers', async () => {
+    const result = await supertest(app).get('/transactions');
+    const status = result.status;
+    expect(status).toEqual(401);
+  });
+
+  it('should return code 401 when token is not valid', async () => {
+    const result = await supertest(app).get('/transactions')
+        .set('Authorization', 'wrongToken');
+    const status = result.status;
+    expect(status).toEqual(409);
+  });
+
+  it('should return code 200 when token is valid', async () => {
+    const result = await supertest(app).get('/transactions')
+        .set('Authorization', 'Bearer token');
+    const status = result.status;
+    expect(status).toEqual(200);
+  });
+});
+
+describe('POST transactions', () => {
+  afterAll(async () => {
+    await connection.query(`
+        DELETE FROM 
+            sessions WHERE 
+            userid = 0;`);
+  });
+
+  it('should return code 401 when theres is no token', async () => {
+    const body = {
+      value: '100',
+      description: 'test value',
+      type: 'input',
+    };
+    const result = await supertest(app).post('/transactions').send(body);
+    const status = result.status;
+    expect(status).toEqual(401);
+  });
+
+  it('should return code 401 when the token is invalid', async () => {
+    const body = {
+      value: '100',
+      description: 'test value',
+      type: 'input',
+    };
+    const result = await supertest(app).post('/transactions')
+        .set('Authorization', 'Bearer invalidToken')
+        .send(body);
+    const status = result.status;
+    expect(status).toEqual(401);
+  });
+
+  it('should return code 400 when the body is not correct', async () => {
+    const body = {
+      value: '',
+    };
+    const result = await supertest(app).post('/transactions')
+        .set('Authorization', 'Bearer token')
+        .send(body);
+    const status = result.status;
+    expect(status).toEqual(400);
+  });
+
+  it('should return code 400 when the body fails market rules', async () => {
+    const body = {
+      value: '',
+      description: 'random@user.com',
+      type: '',
+    };
+    const result = await supertest(app).post('/transactions')
+        .set('Authorization', 'Bearer token')
+        .send(body);
+    const status = result.status;
+    expect(status).toEqual(400);
+  });
+
+
+  it('should return code 201 when the transaction is created', async () => {
+    const body = {
+      value: '100',
+      description: 'teste value',
+      type: 'input',
+    };
+    const result = await supertest(app).post('/transactions')
+        .set('Authorization', 'Bearer token')
+        .send(body);
+    const status = result.status;
+    expect(status).toEqual(201);
+  });
+});
+

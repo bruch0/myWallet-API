@@ -21,7 +21,7 @@ const getTransactions = async (req, res) => {
       SELECT * 
           FROM transactions 
         WHERE userid = $1`, [userId]);
-      res.send(transactions.rows);
+      res.status(200).send(transactions.rows);
     } else {
       res.sendStatus(409);
     }
@@ -31,8 +31,9 @@ const getTransactions = async (req, res) => {
 };
 
 const postTransaction = async (req, res) => {
-  const {value, description, type} = req.body;
+  let {value, description, type} = req.body;
   const token = req.headers.authorization?.replace('Bearer ', '');
+  const regexHTML = /(<([^>]+)>)/ig;
   if (!token) {
     res.sendStatus(401);
     return;
@@ -65,6 +66,9 @@ const postTransaction = async (req, res) => {
         type,
       }).error;
   if (!objectHasMissingProperties) {
+    value = value.replace(regexHTML, '');
+    description = description.replace(regexHTML, '');
+    type = type.replace(regexHTML, '');
     const objectFailedMarketRules = marketRules.validate(
         {
           value,

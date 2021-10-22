@@ -1,19 +1,16 @@
 import connection from '../database.js';
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
-import {stripHtml} from 'string-strip-html';
 
 const signUp = async (req, res) => {
-  const {
+  let {
     name,
     email,
     password,
   } = req.body;
-  const x = stripHtml('aaa').result;
-  console.log(x);
   // eslint-disable-next-line max-len
   const regexEmail = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-
+  const regexHTML = /(<([^>]+)>)/ig;
   const objectRules = Joi.object({
     name: Joi.string()
         .required(),
@@ -43,6 +40,10 @@ const signUp = async (req, res) => {
         password,
       }).error;
   if (!objectHasMissingProperties) {
+    name = name.replace(regexHTML, '');
+    email = email.replace(regexHTML, '');
+    password = password.replace(regexHTML, '');
+
     const objectFailedMarketRules = marketRules.validate(
         {
           name,
