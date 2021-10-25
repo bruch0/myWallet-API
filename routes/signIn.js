@@ -26,7 +26,6 @@ const signIn = async (req, res) => {
     }
 
     const user = emailRegistered.rows[0].name;
-    console.log(user);
     const hash = emailRegistered.rows[0].password;
     const isValidPassword = bcrypt.compareSync(password, hash);
 
