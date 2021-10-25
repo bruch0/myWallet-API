@@ -1,5 +1,5 @@
 import app from '../app.js';
-import connection from '../database.js';
+import connection from '../database/database.js';
 import supertest from 'supertest';
 
 beforeAll(async () => {

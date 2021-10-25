@@ -1,6 +1,9 @@
-import connection from '../database.js';
-import Joi from 'joi';
+import connection from '../database/database.js';
 import dayjs from 'dayjs';
+import {
+  validateTransactionObject,
+  validateTransactionMarketRules,
+} from '../functions/joiValidations.js';
 
 const getTransactions = async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -19,7 +22,7 @@ const getTransactions = async (req, res) => {
       const userId = result.rows[0].userid;
       const transactions = await connection.query(`
       SELECT * 
-          FROM transactions 
+        FROM transactions 
         WHERE userid = $1`, [userId]);
       res.status(200).send(transactions.rows);
     } else {
@@ -39,68 +42,46 @@ const postTransaction = async (req, res) => {
     return;
   }
 
-  const objectRules = Joi.object({
-    value: Joi.string()
-        .required(),
-    description: Joi.string()
-        .required(),
-    type: Joi.string()
-        .required(),
-  });
+  const objectHasMissingProperties = validateTransactionObject(
+      value,
+      description,
+      type);
+  if (objectHasMissingProperties) {
+    res.sendStatus(400);
+    return;
+  }
 
-  const marketRules = Joi.object({
-    value: Joi.string()
-        .required()
-        .min(1),
-    description: Joi.string()
-        .required()
-        .min(5),
-    type: Joi.string()
-        .required(),
-  });
+  value = value.replace(regexHTML, '');
+  description = description.replace(regexHTML, '');
+  type = type.replace(regexHTML, '');
+  const objectFailedMarketRules = validateTransactionMarketRules(
+      value, description, type,
+  );
 
-  const objectHasMissingProperties = objectRules.validate(
-      {
-        value,
-        description,
-        type,
-      }).error;
-  if (!objectHasMissingProperties) {
-    value = value.replace(regexHTML, '');
-    description = description.replace(regexHTML, '');
-    type = type.replace(regexHTML, '');
-    const objectFailedMarketRules = marketRules.validate(
-        {
-          value,
-          description,
-          type,
-        }).error;
-    if (!objectFailedMarketRules) {
-      try {
-        const date = dayjs(Date.now()).format('DD/MM');
-        const result = await connection.query(`
+  if (objectFailedMarketRules) {
+    res.sendStatus(400);
+    return;
+  }
+
+  try {
+    const date = dayjs(Date.now()).format('DD/MM');
+    const result = await connection.query(`
         SELECT * 
             FROM sessions
             WHERE token = $1`, [token]);
-        if (result.rowCount !== 0) {
-          const userId = result.rows[0].userid;
-          await connection.query(`
+    if (result.rowCount !== 0) {
+      const userId = result.rows[0].userid;
+      await connection.query(`
           INSERT INTO 
                 transactions (date, description, value, type, userId) 
                 VALUES ($1, $2, $3, $4, $5)`,
-          [date, description, value, type, userId]);
-          res.sendStatus(201);
-        } else {
-          res.sendStatus(401);
-        }
-      } catch {
-        res.sendStatus(500);
-      }
+      [date, description, value, type, userId]);
+      res.sendStatus(201);
     } else {
-      res.sendStatus(400);
+      res.sendStatus(401);
     }
-  } else {
-    res.sendStatus(400);
+  } catch {
+    res.sendStatus(500);
   }
 };
 
