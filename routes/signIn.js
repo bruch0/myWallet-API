@@ -26,6 +26,7 @@ const signIn = async (req, res) => {
     }
 
     const user = emailRegistered.rows[0].name;
+    console.log(user);
     const hash = emailRegistered.rows[0].password;
     const isValidPassword = bcrypt.compareSync(password, hash);
 
@@ -44,7 +45,7 @@ const signIn = async (req, res) => {
             INSERT INTO 
                 sessions (token, userId) 
                 VALUES ($1, $2)`, [token, emailRegistered.rows[0].id]);
-      res.status(200).send({token});
+      res.status(200).send({token, user});
     } else {
       res.status(200).send({token: result.rows[0].token, user});
     }
