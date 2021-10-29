@@ -2,14 +2,13 @@ import pg from 'pg';
 
 const {Pool} = pg;
 
-const connectionData = {
-  user: 'postgres',
-  password: '123456',
-  host: 'localhost',
-  port: 5432,
-  database: 'mywallet',
+const databaseConfig = {
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 };
 
-const connection = new Pool(connectionData);
+const connection = new Pool(databaseConfig);
 
 export default connection;
