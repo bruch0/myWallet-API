@@ -7,7 +7,6 @@ const getTransactions = async ({ userId }) => {
   const transactions = await transactionRepository.getTransactions({ userId });
 
   transactions.forEach((transaction) => {
-    delete transaction.id;
     delete transaction.user_id;
   });
 
