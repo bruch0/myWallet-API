@@ -212,7 +212,7 @@ npm run tests
   
 ## Deployment 🚀
 
-<p align="center"><a  href="https://mywallet-api-bruch0.herokuapp.com/">You can check the server running on heroku here!</a></p>
+<p align="center"><a  href="https://my-wallet-api-bruch0.herokuapp.com/">You can check the server running on heroku here!</a></p>
 
 </br>
 
